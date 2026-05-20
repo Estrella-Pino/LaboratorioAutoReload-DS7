@@ -1,12 +1,9 @@
 <?php
-
-namespace App\Models;
-
+namespace App;
 class Usuario
 {
-
-    public function mostrarNombre()
+    public function getUser(): string
     {
-        return "Hola soy Estrella";
+        return "Usuario cargado automáticamente";
     }
 }

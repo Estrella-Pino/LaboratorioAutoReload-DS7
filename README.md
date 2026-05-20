@@ -1,80 +1,130 @@
 # Laboratorio: Implementación de Autocarga PSR-4 con Composer
 
-Este repositorio contiene la documentación y estructura práctica para la implementación del estándar **PSR-4** utilizando el sistema de autocarga (*Autoload*) de **Composer** en PHP, eliminando por completo el uso manual de sentencias `require` e `include`.
+Este repositorio contiene la documentación y una estructura práctica para implementar el estándar **PSR-4** mediante el sistema de autocarga (_Autoload_) de **Composer** en PHP, evitando el uso manual de `require` e `include` para cargar clases.
 
 ---
 
 ## Información del Estudiante
-* **Nombre:** Estrella Pino
-* **Cédula:** 8-1031-1486
-* **Curso:** Desarrollo de Software 7
-* **Fecha de Ejecución:** 01-05-2026
-* **Instructor de Laboratorio:** Irina Fong
+
+- **Nombre:** Estrella Pino
+- **Cédula:** 8-1031-1486
+- **Curso:** Desarrollo de Software 7
+- **Fecha de Ejecución:** 01-05-2026
+- **Instructor de Laboratorio:** Irina Fong
 
 ---
 
-## 📝 Introducción
-El estándar **PSR-4** define una especificación formal para la carga automatizada de clases a través de un mapeo directo entre los espacios de nombres (*namespaces*) y la estructura de directorios del sistema de archivos.
+## Introducción
 
-El objetivo principal de este laboratorio es sustituir el flujo tradicional de importación manual por una solución automatizada, limpia, escalable y transparente bajo el principio de *Lazy Loading*.
+El estándar **PSR-4** define una forma estandarizada de cargar clases automáticamente en PHP a partir del **namespace** y un **mapeo con carpetas**.
+
+El objetivo del laboratorio es sustituir la importación manual por una solución automatizada, limpia y escalable bajo el principio de **Lazy Loading** (carga bajo demanda): Composer solo carga las clases cuando realmente se usan.
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
-La correspondencia entre la jerarquía de carpetas y los namespaces es estricta (case-sensitive) según lo dictado por la norma de interoperabilidad de PHP:
+La correspondencia entre jerarquía de carpetas y namespaces es estricta (case-sensitive). En este proyecto, según `composer.json`, el mapeo PSR-4 es:
+
+- **`App\` → `app/`**
 
 ![alt text](image-1.png)
 
-Flujo de Trabajo — Paso a Paso
-Paso 1 — Inicialización del Proyecto y Directorios
-Se creó la carpeta raíz Autocarga/ y los subdirectorios bajo src/. La regla de negocio es directa: si una clase va a pertenecer al namespace Database\Model, debe residir físicamente en el directorio src/Database/Model/.
+---
 
-Paso 2 — Creación de las Clases PHP
-Cada archivo de clase declara su espacio de nombres en la primera línea de código inmediatamente después de la apertura de la etiqueta <?php.
+## Flujo de Trabajo — Paso a Paso
 
-Ejemplo de definición (src/Database/Model/Usuario.php):
+### Paso 1 — Configurar la regla PSR-4 en `composer.json`
 
-PHP
-<?php
-namespace Database\Model;
+En la raíz del proyecto se define el mapeo PSR-4. En este repo el archivo `composer.json` contiene:
+
+- `App\` busca clases dentro de `app/`
+
+Ejemplo (conceptual):
+
+- `App\Models\Producto` debe existir en `app/Models/Producto.php`
+- `App\Services\Saludo` debe existir en `app/Services/Saludo.php`
+
+---
+
+### Paso 2 — Crear clases con namespace correcto
+
+Cada archivo de clase declara su espacio de nombres inmediatamente después de `<?php`.
+
+Ejemplo: `app/Models/Producto.php`
 
 ![alt text](image-2.png)
 
-💡 Nota de eficiencia: Realizar la impresión sin el uso de Composer daría el mismo resultado visual, pero ralentiza drásticamente el desarrollo al obligar a escribir un require individual por cada clase nueva.
+---
 
-Paso 3 — Configuración del Archivo composer.json
-Se inicializó el archivo de configuración en la raíz del proyecto para definir las reglas de mapeo PSR-4:
+### Paso 3 — Ejecutar `composer install`
 
-![alt text](image-3.png)
-
-Este bloque le indica de manera explícita a Composer los puntos de partida de resolución:
-
-El namespace raíz App\ buscará elementos dentro de src/App/.
-
-
-Paso 4 — Ejecución de composer install
-Para procesar la configuración y compilar el mapa de clases, se ejecuta el siguiente comando en la terminal:
+Para que Composer procese la configuración y genere el cargador, se ejecuta:
 
 Bash
-composer install
-Este comando genera la carpeta vendor/, la cual administra de forma automatizada las dependencias del proyecto y, fundamentalmente, el script autogenerado vendor/autoload.php.
 
-Paso 5 — Pruebas de Integración con Prueba.php
-Se implementó un archivo de prueba en la raíz del proyecto. Al incluir el cargador de Composer, se reemplazan las sentencias de carga física tradicionales por el operador lógico use.
+```bash
+composer install
+```
+
+Esto crea la carpeta `vendor/` y el archivo autogenerado `vendor/autoload.php`.
+
+---
+
+### Paso 4 — Usar el cargador y declarar clases con `use`
+
+En el script de prueba (por ejemplo `index.php`) se carga una vez el autoload:
+
+PHP
+
+```php
+require("vendor/autoload.php");
+```
+
+Luego se utilizan las clases declarando sus namespaces con `use`:
 
 ![alt text](image-4.png)
 
-⚠️ Aclaración técnica: La sentencia use no realiza la carga del archivo en disco; simplemente define un alias corto dentro del ámbito actual del script. El trabajo pesado de localización e inclusión lo realiza vendor/autoload.php bajo demanda únicamente cuando la clase es instanciada.
+Aclaración técnica: `use` no carga el archivo desde disco. Solo crea un alias del namespace dentro del script. La carga real ocurre cuando se instancia la clase, y Composer resuelve su ubicación usando la regla PSR-4.
 
-Paso 6 — Configuración de .gitignore
-Antes de realizar el commit y subida al repositorio remoto, se creó un archivo .gitignore para excluir la carpeta de dependencias:
+---
+
+### Paso 5 — Código de prueba (`index.php`)
+
+El proyecto ya incluye un ejemplo en `index.php`:
+
+- `App\Models\Producto` → `app/Models/Producto.php`
+- `App\Services\Saludo` → `app/Services/Saludo.php`
+
+Ejemplo (resumen):
+
+- Se instancia `Producto` y se imprime el resultado de `mostrarProducto()`.
+- Se instancia `Saludo` y se imprime el resultado de `mensaje()`.
+
+---
+
+### Paso 6 — Configurar `.gitignore` para `vendor/`
+
+Antes de publicar el proyecto, es importante ignorar dependencias generadas por Composer:
 
 Plaintext
+
+```txt
 /vendor/
-Finalidad: Demostrar la portabilidad del estándar. Al clonar un repositorio limpio que carece de la carpeta vendor/, basta con ejecutar composer install en la terminal para reconstruir el entorno por completo de manera inmediata y exacta.
+```
 
-Conclusiones Técnicas
-Mantenibilidad y Escalabilidad: El desarrollo se vuelve modular. Agregar nuevas clases no requiere alterar configuraciones globales ni listados de dependencias manuales; el ecosistema de Composer resuelve el mapeo en tiempo de ejecución de manera transparente.
+Finalidad: al clonar un repositorio limpio (sin `vendor/`), basta ejecutar `composer install` para reconstruir el entorno de forma inmediata.
 
-Optimización de Memoria (Lazy Loading): Composer sólo procesa e incluye en memoria las clases que efectivamente son instanciadas durante el ciclo de vida del script actual. En entornos con cientos de clases donde solo se requiere un subconjunto mínimo, las clases restantes jamás son consumidas en disco, reduciendo la carga en memoria RAM.
+---
+
+## Conclusiones Técnicas
+
+### Mantenibilidad y Escalabilidad
+
+- El desarrollo se vuelve modular.
+- Agregar nuevas clases no exige modificar el cargador de forma manual: basta con respetar el mapeo PSR-4 (namespace ↔ carpeta).
+
+### Optimización de Memoria (Lazy Loading)
+
+- Composer solo resuelve y carga las clases que realmente se instancian durante la ejecución.
+- En proyectos con muchas clases, esto reduce consumo de memoria y mejora el rendimiento.
